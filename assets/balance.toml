@@ -1,0 +1,51 @@
+# Gameplay balance overrides.
+#
+# Every key is optional: anything omitted keeps its built-in default, and the
+# game runs normally if this file is missing or malformed. Distances are in map
+# units (the window is a scaled copy of the map) and durations are in seconds.
+#
+# Load a different file with:  pvz --balance path/to/file.toml
+
+[economy]
+starting_sun = 20
+sun_value = 5
+player_health = 100
+# How long an uncollected sun stays on the lawn.
+sun_lifetime = 12.0
+sun_drift_speed = 60.0
+sun_scatter_radius = 150.0
+
+[waves]
+# Zombies per match, drawn once from this range.
+zombie_count_min = 15
+zombie_count_max = 30
+spawn_interval_min = 3.0
+spawn_interval_max = 6.0
+# Grace period before the first zombie, so there is time to plant a sunflower.
+first_spawn_delay = 5.0
+
+[peashooter]
+cost = 4
+health = 100
+action_interval = 2.0
+damage = 30
+projectile_speed = 120.0
+
+[wallnut]
+cost = 5
+health = 400
+# Zero means no periodic action: a wallnut only soaks damage.
+action_interval = 0.0
+damage = 0
+
+[sunflower]
+cost = 5
+health = 100
+action_interval = 10.0
+damage = 0
+
+[basic_zombie]
+health = 150
+speed = 60.0
+damage = 20
+bite_interval = 2.0

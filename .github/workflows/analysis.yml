@@ -1,0 +1,65 @@
+name: Static analysis
+
+on:
+  push:
+    branches: [main, rework]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: analysis-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  clang-tidy:
+    name: clang-tidy
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        uses: ./.github/actions/install-linux-deps
+
+      - name: Install clang-tidy
+        run: sudo apt-get install -y clang-tidy
+
+      - name: Generate compile database
+        run: cmake --preset ci-linux-clang
+        env:
+          CC: clang
+          CXX: clang++
+
+      # Blocking on purpose. The codebase is small and starts clean, so keeping
+      # it clean is close to free -- and a check that can never fail is not a
+      # check. Third-party sources under _deps are excluded.
+      - name: Run clang-tidy on project sources
+        run: |
+          find src include -name '*.cpp' -o -name '*.hpp' | \
+            grep -v '_deps' | \
+            xargs clang-tidy -p build/ci-linux-clang --warnings-as-errors='*'
+
+  cppcheck:
+    name: cppcheck (advisory)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    # Advisory: cppcheck's false-positive rate on modern C++ makes it a poor
+    # gate, but the findings are still worth surfacing.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install cppcheck
+        run: sudo apt-get update && sudo apt-get install -y cppcheck
+
+      - name: Run cppcheck
+        run: |
+          cppcheck --enable=warning,performance,portability \
+            --std=c++20 \
+            --inline-suppr \
+            --suppress=missingIncludeSystem \
+            --suppress=missingInclude \
+            --error-exitcode=1 \
+            -I include \
+            src

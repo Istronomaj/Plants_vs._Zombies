@@ -1,0 +1,19 @@
+name: Install Linux dependencies
+description: Installs the X11, OpenGL and FreeType packages SFML 3 needs to build on Linux.
+
+runs:
+  using: composite
+  steps:
+    - name: Install SFML build dependencies
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends \
+          ninja-build \
+          libxrandr-dev \
+          libxcursor-dev \
+          libxi-dev \
+          libudev-dev \
+          libfreetype-dev \
+          libgl1-mesa-dev \
+          libegl1-mesa-dev

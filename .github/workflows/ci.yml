@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  push:
+    branches: [main, rework]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux GCC
+            os: ubuntu-24.04
+            preset: ci-linux-gcc
+          - name: Linux Clang
+            os: ubuntu-24.04
+            preset: ci-linux-clang
+          - name: macOS
+            os: macos-14
+            preset: ci-macos
+          - name: Windows MSVC
+            os: windows-2022
+            preset: ci-windows-msvc
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        uses: ./.github/actions/install-linux-deps
+
+      - name: Install Ninja
+        if: runner.os == 'macOS'
+        run: brew install ninja
+
+      # SFML is built from source, which dominates the build time.
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: build/${{ matrix.preset }}/_deps
+          key: deps-${{ matrix.preset }}-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: deps-${{ matrix.preset }}-
+
+      - name: Configure
+        run: cmake --preset ${{ matrix.preset }}
+
+      - name: Build
+        run: cmake --build --preset ${{ matrix.preset }}
+
+      # No "|| true": a failing test fails the job.
+      - name: Test
+        run: ctest --preset ${{ matrix.preset }}
+
+      - name: Verify assets ship with the binary
+        shell: bash
+        run: |
+          cmake --install build/${{ matrix.preset }} --prefix "$PWD/staging" \
+            --config Release
+          test -f staging/bin/assets/map.png
+          echo "assets present in install tree"
+
+  layering:
+    name: Core stays graphics-free
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      # The whole point of the core/app split is that the simulation can be
+      # tested without a window. If SFML leaks into the core, that is gone.
+      #
+      # The include is the reliable signal: SFML cannot be used without one,
+      # and matching only includes means comments that mention sf:: types for
+      # contrast do not trip the check.
+      - name: Assert no SFML in the core layer
+        run: |
+          hits=$(grep -rnE '^[[:space:]]*#[[:space:]]*include[[:space:]]*[<"]SFML/' \
+                   --include='*.cpp' --include='*.hpp' \
+                   src/core include/pvz/core || true)
+          if [ -n "$hits" ]; then
+            echo "$hits"
+            echo "::error::pvz_core must not depend on SFML"
+            exit 1
+          fi
+          echo "core layer is clean"

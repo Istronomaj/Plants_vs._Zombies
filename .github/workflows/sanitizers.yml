@@ -1,0 +1,41 @@
+name: Sanitizers
+
+on:
+  push:
+    branches: [main, rework]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: sanitizers-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  asan-ubsan:
+    name: ASan + UBSan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Ninja
+        run: sudo apt-get update && sudo apt-get install -y ninja-build
+
+      # Runs against the headless test suite rather than the windowed game.
+      # Sanitising a GUI binary driven by synthetic keypresses, as the previous
+      # setup did, exercises almost none of the game logic.
+      - name: Configure
+        run: cmake --preset asan
+        env:
+          CC: clang
+          CXX: clang++
+
+      - name: Build
+        run: cmake --build --preset asan
+
+      - name: Run tests under sanitizers
+        run: ctest --preset asan
+        env:
+          ASAN_OPTIONS: detect_leaks=1:abort_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1

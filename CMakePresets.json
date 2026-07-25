@@ -1,0 +1,142 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 24,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "dev-debug",
+      "inherits": "base",
+      "displayName": "Debug (tests, warnings as errors)",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "PVZ_BUILD_TESTS": "ON",
+        "PVZ_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "dev-release",
+      "inherits": "base",
+      "displayName": "Release",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "PVZ_BUILD_TESTS": "ON"
+      }
+    },
+    {
+      "name": "core-only",
+      "inherits": "base",
+      "displayName": "Core + tests, no graphics (fast, no SFML download)",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "PVZ_BUILD_APP": "OFF",
+        "PVZ_BUILD_TESTS": "ON",
+        "PVZ_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "asan",
+      "inherits": "base",
+      "displayName": "Debug + ASan/UBSan",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "PVZ_BUILD_TESTS": "ON",
+        "PVZ_BUILD_APP": "OFF",
+        "PVZ_ENABLE_SANITIZERS": "ON"
+      }
+    },
+    {
+      "name": "ci-linux-gcc",
+      "inherits": "base",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++",
+        "PVZ_BUILD_TESTS": "ON",
+        "PVZ_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "ci-linux-clang",
+      "inherits": "base",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "PVZ_BUILD_TESTS": "ON",
+        "PVZ_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "ci-macos",
+      "inherits": "base",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "PVZ_BUILD_TESTS": "ON",
+        "PVZ_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "ci-windows-msvc",
+      "inherits": "base",
+      "generator": "Visual Studio 17 2022",
+      "architecture": "x64",
+      "cacheVariables": {
+        "PVZ_BUILD_TESTS": "ON",
+        "PVZ_WARNINGS_AS_ERRORS": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    { "name": "dev-debug", "configurePreset": "dev-debug" },
+    { "name": "dev-release", "configurePreset": "dev-release" },
+    { "name": "core-only", "configurePreset": "core-only" },
+    { "name": "asan", "configurePreset": "asan" },
+    { "name": "ci-linux-gcc", "configurePreset": "ci-linux-gcc" },
+    { "name": "ci-linux-clang", "configurePreset": "ci-linux-clang" },
+    { "name": "ci-macos", "configurePreset": "ci-macos" },
+    {
+      "name": "ci-windows-msvc",
+      "configurePreset": "ci-windows-msvc",
+      "configuration": "Release"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "output": { "outputOnFailure": true },
+      "execution": { "noTestsAction": "error", "stopOnFailure": false }
+    },
+    { "name": "dev-debug", "inherits": "base", "configurePreset": "dev-debug" },
+    { "name": "dev-release", "inherits": "base", "configurePreset": "dev-release" },
+    { "name": "core-only", "inherits": "base", "configurePreset": "core-only" },
+    { "name": "asan", "inherits": "base", "configurePreset": "asan" },
+    { "name": "ci-linux-gcc", "inherits": "base", "configurePreset": "ci-linux-gcc" },
+    { "name": "ci-linux-clang", "inherits": "base", "configurePreset": "ci-linux-clang" },
+    { "name": "ci-macos", "inherits": "base", "configurePreset": "ci-macos" },
+    {
+      "name": "ci-windows-msvc",
+      "inherits": "base",
+      "configurePreset": "ci-windows-msvc",
+      "configuration": "Release"
+    }
+  ]
+}
